@@ -1,0 +1,11 @@
+{
+  "name": "telegram-bot-webhook-notify",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.61.0"
+  }
+}
