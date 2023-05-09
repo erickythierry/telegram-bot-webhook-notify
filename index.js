@@ -11,6 +11,11 @@ const authToken = process.env.AUTH_TOKEN
 
 const bot = new TelegramBot(botToken, { polling: true })
 
+// Função para log das mensagens recebidas pelo bot
+bot.on('message', (msg) => {
+    console.log('📩 mensagem recebida no telegram:\n', JSON.stringify(msg, null, 2))
+})
+
 const app = express()
 
 app.use(bodyParser.json());
@@ -29,8 +34,15 @@ app.post('/notify', authenticateToken, (req, res) => {
     const { message } = req.query;
     // Enviar a notificação
     bot.sendMessage(chatId, message)
-        .then(() => res.json({ message: 'Notificação enviada com sucesso' }))
-        .catch((error) => res.status(500).json({ error: 'Ocorreu um erro ao enviar a notificação', details: error }));
+        .then(() => {
+            console.log('webhook solicitado, enviando notificação...')
+            console.log(req.body)
+            res.json({ message: 'Notificação enviada com sucesso' })
+        })
+        .catch((error) => {
+            console.log('erro ao enviar notificação', error.message)
+            res.status(500).json({ error: 'Ocorreu um erro ao enviar a notificação', details: error })
+        });
 })
 
 // Iniciar o servidor
