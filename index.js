@@ -30,19 +30,38 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Rota para receber notificações
-app.post('/notify', authenticateToken, (req, res) => {
-    const { message } = req.query;
-    // Enviar a notificação
-    bot.sendMessage(chatId, message)
-        .then(() => {
-            console.log('webhook solicitado, enviando notificação...')
-            console.log(req.body)
-            res.json({ message: 'Notificação enviada com sucesso' })
-        })
-        .catch((error) => {
-            console.log('erro ao enviar notificação', error.message)
-            res.status(500).json({ error: 'Ocorreu um erro ao enviar a notificação', details: error })
-        });
+app.post('/notify', authenticateToken, async (req, res) => {
+    let { message } = req.query;
+
+    // caso a requisição nao tenha uma mensagem, o ip de quem requisitou sera enviado como mensagem
+    if (!message) message = 'notificação recebida de:' + req.socket.remoteAddress
+
+    const { body } = req
+    let corpo = null
+
+    // evita que qualquer erro na conversão de json quebre o codigo
+    try {
+        corpo = JSON.stringify(body, null, 2)
+    } catch (error) {
+        console.log(error.message)
+    }
+
+    try {
+        // Enviar a notificação
+        console.log('webhook solicitado, enviando notificação...', body)
+
+        // caso a requisição tenha um body e ele nao esteja vazio, será enviada a notificação formatada com o body nela
+        if (corpo && corpo != '{}') await bot.sendMessage(chatId, `<b>${message}</b> \n\n<pre>${corpo}</pre>`, { parse_mode: 'HTML' });
+
+        // caso contrário, será enviada apenas a mensagem recebida na query
+        else await bot.sendMessage(chatId, message);
+
+        res.json({ message: 'Notificação enviada com sucesso' })
+
+    } catch (error) {
+        console.log('erro ao enviar notificação', error.message)
+        res.status(500).json({ error: 'Ocorreu um erro ao enviar a notificação', details: error })
+    }
 })
 
 // Iniciar o servidor
